@@ -41,6 +41,7 @@ const MENUS = {
 
 const STORAGE_KEY = "training_log_v2";
 const START_DATE_KEY = "training_start_date";
+const OFFSET_KEY = "training_offset";
 
 function loadLog() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
@@ -55,15 +56,22 @@ function getStartDate() {
   return d;
 }
 
+function getOffset() {
+  return parseInt(localStorage.getItem(OFFSET_KEY) || "0", 10);
+}
+function setOffset(n) {
+  localStorage.setItem(OFFSET_KEY, String(n));
+}
+
 function daysBetween(a, b) {
   return Math.floor((new Date(b) - new Date(a)) / 86400000);
 }
 
-function getScheduledDay(dateStr) {
+function getScheduledDay(dateStr, offset = 0) {
   const start = getStartDate();
   const diff = daysBetween(start, dateStr);
   if (diff < 0) return null;
-  return ROTATION[diff % ROTATION.length];
+  return ROTATION[(diff + offset) % ROTATION.length];
 }
 
 function getDaysInMonth(year, month) {
@@ -83,10 +91,20 @@ export default function App() {
   const [sets, setSets] = useState({});
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  const [offset, setOffsetState] = useState(getOffset);
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth());
+
+  function skipDay() {
+    const n = (offset + 1) % ROTATION.length;
+    setOffset(n); setOffsetState(n);
+  }
+  function prevDay() {
+    const n = (offset + ROTATION.length - 1) % ROTATION.length;
+    setOffset(n); setOffsetState(n);
+  }
 
   useEffect(() => {
     let interval;
@@ -158,7 +176,7 @@ export default function App() {
   const allDone = activeDay && MENUS[activeDay].exercises.every((ex) => sets[ex.id]?.every((s) => s.done));
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   const totalSessions = Object.values(log).reduce((a, v) => a + v.length, 0);
-  const todayScheduled = getScheduledDay(todayStr());
+  const todayScheduled = getScheduledDay(todayStr(), offset);
 
   const loggedDates = {};
   Object.entries(log).forEach(([day, entries]) => {
@@ -195,7 +213,7 @@ export default function App() {
           {cells.map((d, i) => {
             if (!d) return <div key={`e${i}`} />;
             const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-            const scheduled = getScheduledDay(dateStr);
+            const scheduled = getScheduledDay(dateStr, offset);
             const logged = loggedDates[dateStr];
             const isToday = isCurrentMonth && d === todayDate;
             const color = logged ? MENUS[logged]?.color : scheduled ? MENUS[scheduled]?.color : null;
@@ -244,14 +262,21 @@ export default function App() {
           <div style={s.tagline}>細マッチョへの道</div>
 
           <div style={{ ...s.todayBanner, borderColor: todayScheduled ? MENUS[todayScheduled].color : "#333" }}>
-            <span style={s.todayLabel}>今日は</span>
-            {todayScheduled ? (
-              <span style={{ ...s.todayDay, color: MENUS[todayScheduled].color }}>
-                {MENUS[todayScheduled].label} — {MENUS[todayScheduled].sub}
-              </span>
-            ) : (
-              <span style={s.todayRest}>🛌 休息日</span>
-            )}
+            <div style={{ flex: 1 }}>
+              <span style={s.todayLabel}>今日は　</span>
+              {todayScheduled ? (
+                <span style={{ ...s.todayDay, color: MENUS[todayScheduled].color }}>
+                  {MENUS[todayScheduled].label} — {MENUS[todayScheduled].sub}
+                </span>
+              ) : (
+                <span style={s.todayRest}>🛌 休息日</span>
+              )}
+            </div>
+            <div style={s.skipRow}>
+              <button style={s.skipBtn} onClick={prevDay} title="1日戻す">‹</button>
+              <span style={s.skipLabel}>ずらす</span>
+              <button style={s.skipBtn} onClick={skipDay} title="1日スキップ">›</button>
+            </div>
           </div>
 
           {renderCalendar()}
@@ -426,6 +451,9 @@ const s = {
   todayLabel: { fontSize: 12, color: "#666" },
   todayDay: { fontSize: 16, fontWeight: 700 },
   todayRest: { fontSize: 15, color: "#888" },
+  skipRow: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
+  skipBtn: { background: "#2a2a2a", border: "none", color: "#aaa", fontSize: 18, width: 28, height: 28, borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 },
+  skipLabel: { fontSize: 10, color: "#555" },
   calWrap: { background: "#141414", borderRadius: 12, padding: "14px", marginBottom: 20 },
   calNav: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   calNavBtn: { background: "none", border: "none", color: "#aaa", fontSize: 20, cursor: "pointer", padding: "0 8px" },
