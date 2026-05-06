@@ -251,7 +251,6 @@ export default function App() {
     <div style={s.root}>
       <div style={s.grain} />
 
-      {メニュー表モーダル}
       {showMenu && (
         <div style={s.modalOverlay} onClick={() => setShowMenu(false)}>
           <div style={s.modalContent} onClick={e => e.stopPropagation()}>
