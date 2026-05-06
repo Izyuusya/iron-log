@@ -92,6 +92,7 @@ export default function App() {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [offset, setOffsetState] = useState(getOffset);
+  const [showMenu, setShowMenu] = useState(false);
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -250,13 +251,29 @@ export default function App() {
     <div style={s.root}>
       <div style={s.grain} />
 
+      {メニュー表モーダル}
+      {showMenu && (
+        <div style={s.modalOverlay} onClick={() => setShowMenu(false)}>
+          <div style={s.modalContent} onClick={e => e.stopPropagation()}>
+            <button style={s.modalClose} onClick={() => setShowMenu(false)}>✕</button>
+            <div style={s.modalTitle}>トレーニングメニュー表</div>
+            <div style={s.modalImgWrap}>
+              <img src="/iron-log/menu.png" alt="メニュー表" style={s.modalImg} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {view === "home" && (
         <div style={s.page}>
           <div style={s.header}>
             <div style={s.logo}>IRON LOG</div>
-            <div style={s.stat}>
-              <span style={s.statNum}>{totalSessions}</span>
-              <span style={s.statLabel}>回達成</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+              <div style={s.stat}>
+                <span style={s.statNum}>{totalSessions}</span>
+                <span style={s.statLabel}>回達成</span>
+              </div>
+              <button style={s.menuBtn} onClick={() => setShowMenu(true)}>📋 メニュー表</button>
             </div>
           </div>
           <div style={s.tagline}>細マッチョへの道</div>
@@ -319,7 +336,10 @@ export default function App() {
             <div style={{ ...s.dayBadge, background: MENUS[activeDay].color }}>
               {MENUS[activeDay].label} / {MENUS[activeDay].sub}
             </div>
-            <div style={s.timer}>{fmt(elapsed)}</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+              <div style={s.timer}>{fmt(elapsed)}</div>
+              <button style={s.menuBtn} onClick={() => setShowMenu(true)}>📋</button>
+            </div>
           </div>
           {MENUS[activeDay].exercises.map((ex) => {
             const exSets = sets[ex.id] || [];
@@ -493,4 +513,11 @@ const s = {
   chart: { display: "flex", alignItems: "flex-end", gap: 6, height: 120, background: "#141414", borderRadius: 10, padding: "12px 8px 8px", marginBottom: 20, overflowX: "auto" },
   chartCol: { display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40, flex: 1 },
   histCard: { background: "#141414", borderRadius: 10, padding: "14px" },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 100, display: "flex", flexDirection: "column" },
+  modalContent: { position: "relative", flex: 1, display: "flex", flexDirection: "column", padding: "16px" },
+  modalClose: { position: "absolute", top: 8, right: 8, background: "#333", border: "none", color: "#fff", fontSize: 18, width: 36, height: 36, borderRadius: "50%", cursor: "pointer", zIndex: 101 },
+  modalTitle: { fontSize: 14, fontWeight: 700, color: "#aaa", marginBottom: 12, marginTop: 4, textAlign: "center" },
+  modalImgWrap: { flex: 1, overflow: "auto", display: "flex", alignItems: "flex-start" },
+  modalImg: { width: "100%", height: "auto", borderRadius: 8 },
+  menuBtn: { background: "#1a1a1a", border: "1px solid #333", borderRadius: 6, color: "#aaa", fontSize: 11, padding: "4px 8px", cursor: "pointer" },
 };
