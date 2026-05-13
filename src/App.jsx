@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // A→B→休→C→休→A... のローテーション
-const ROTATION = ["A", "B", null, "C", null];
+const ROTATION = ["A", "C", "B", null];
 
 const MENUS = {
   A: {
@@ -93,6 +93,7 @@ export default function App() {
   const [timerActive, setTimerActive] = useState(false);
   const [offset, setOffsetState] = useState(getOffset);
   const [showMenu, setShowMenu] = useState(false);
+  const startTimeRef = useRef(Date.now());
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -109,7 +110,11 @@ export default function App() {
 
   useEffect(() => {
     let interval;
-    if (timerActive) interval = setInterval(() => setElapsed((e) => e + 1), 1000);
+    if (timerActive) {
+      interval = setInterval(() => {
+        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 1000);
+    }
     return () => clearInterval(interval);
   }, [timerActive]);
 
@@ -127,6 +132,7 @@ export default function App() {
     setSets(initial);
     setActiveDay(day);
     setElapsed(0);
+    startTimeRef.current = Date.now();
     setTimerActive(true);
     setView("workout");
   }
